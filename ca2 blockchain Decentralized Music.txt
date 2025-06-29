@@ -1,0 +1,48 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract DecentralizedMusicStreaming {
+    address public owner;
+    uint public songPrice = 0.01 ether; // Default price per song
+
+    struct Song {
+        uint id;
+        string name;
+        string artist;
+        uint price;
+        string ipfsHash; // IPFS CID for the song file/metadata
+        address owner;
+    }
+
+    mapping(uint => Song) public songs;
+    mapping(address => uint[]) private userPurchases;
+    uint public totalSongs = 0;
+
+    event SongPurchased(address indexed buyer, uint songId);
+    event SongAdded(uint songId, string name, string artist, uint price, string ipfsHash);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner can add songs");
+        _;
+    }
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    function addSong(string memory _name, string memory _artist, uint _price, string memory _ipfsHash) public onlyOwner {
+        totalSongs++;
+        songs[totalSongs] = Song(totalSongs, _name, _artist, _price, _ipfsHash, owner);
+        emit SongAdded(totalSongs, _name, _artist, _price, _ipfsHash);
+    }
+
+    function getUserSongs() public view returns (uint[] memory) {
+        return userPurchases[msg.sender];
+    }
+
+    function getSongDetails(uint _songId) public view returns (string memory, string memory, uint, string memory, address) {
+        require(_songId > 0 && _songId <= totalSongs, "Invalid song ID");
+        Song memory song = songs[_songId];
+        return (song.name, song.artist, song.price, song.ipfsHash, song.owner);
+    }
+}
